@@ -2,7 +2,8 @@
 
 import os, sys, time
 import csv
-import urllib2
+# import urllib2
+from urllib.request import * 
 import json
 from datetime import date
 import argparse
@@ -48,7 +49,7 @@ class Trello_agent:
         qstr = 'https://trello.com/1/members/' + self.username + '/boards?key=' + \
                 self.credential_key + '&token=' + self.token + '&fields=name'
         try:
-            qres = urllib2.urlopen(qstr).read()
+            qres = urlopen(qstr).read().decode('utf-8')
         except:
             print('Access error')
             sys.exit()
@@ -58,12 +59,12 @@ class Trello_agent:
         for name_id in qres:
             if name_id['name'] == self.board_name:
                 self.board_id = name_id['id'].strip()
-
+        
     def get_list_id(self, list_name):
         qstr = 'https://trello.com/1/boards/' + self.board_id + '/lists?key=' + \
                 self.credential_key + '&token=' + self.token + '&fields=name'
         try:
-            qres = urllib2.urlopen(qstr).read()
+            qres = urlopen(qstr).read().decode('utf-8')
         except:
             print('Access error: could not get list id')
             sys.exit()
@@ -78,19 +79,18 @@ class Trello_agent:
                 '/cards?key=' + self.credential_key + '&token=' + self.token + \
                 '&filter=open'
         
-        qres = urllib2.urlopen(qstr).read()
+        qres = urlopen(qstr).read().decode('utf-8')
         self.done_cards = json.loads(qres)
     
     def write_done_cards(self):
         outfn = 'trello_done_log_' + time.strftime('%Y-%m-%d') + '.md'
-        fn = open(outfn, 'a+')
+        fn = open(outfn, 'a+', encoding = 'utf-8')
         
         for card in self.done_cards:
             due = str(card['due'])
             if due != 'None':
                 due = due[0:10].replace('-','/')
-            # for japanese board name, encode() is required 
-            write_str = '## ' + card['name'].encode('utf-8') + ' (' + due + ') \n\n\n'
+            write_str = '## ' + card['name'] + ' (' + due + ') \n\n\n'
             fn.write(write_str)
 
     def archive_all_dones(self):
@@ -98,13 +98,13 @@ class Trello_agent:
                 '/archiveAllCards?key=' + self.credential_key + '&token=' + self.token 
         
         # generate POST 
-        req = urllib2.Request(qstr, '')
+        req = Request(qstr, data = '')
         # archive all cards        
-        urllib2.urlopen(req)
+        urlopen(req)
     
     def batch_card_create(self, filepath):
         # import schedule list
-        schedules = csv.reader(open(filepath, 'rb'), delimiter = ',')
+        schedules = csv.reader(open(filepath, 'r'), delimiter = ',')
         
         for row in schedules:
             datebuf = row[1]
@@ -123,8 +123,8 @@ class Trello_agent:
                         '&idList=' + self.list_id + \
                         '&name=' + row[0].replace(' ', '%20') + \
                         '&due=' + datebuf
-                req = urllib2.Request(qstr, '')
-                urllib2.urlopen(req)
+                req = Request(qstr, '')
+                urlopen(req)
             else:
                 print('Error: date column is not correct format')
                 print(row)
@@ -148,9 +148,9 @@ def card_batch_generate():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default = 'archive', help = 'archive or create')
+    parser.add_argument('--mode', default = 'create', help = 'archive or create')
     args = parser.parse_args()
-
+    
     if args.mode == 'archive':
         make_log()
     elif args.mode == 'create':
