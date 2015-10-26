@@ -27,7 +27,7 @@ class Trello_agent:
         try:
             fn = open(filepath, 'r')
         except IOError:
-            print 'Error: credential file does not exist'
+            print('Error: credential file does not exist')
             sys.exit()
         
         for buf in fn.readlines():
@@ -42,7 +42,7 @@ class Trello_agent:
                 self.username = v.strip()
             else:
                 print('following information is not valid')
-                print k + ':' + v
+                print(k + ':' + v)
 
     def get_board_id(self):
         qstr = 'https://trello.com/1/members/' + self.username + '/boards?key=' + \
@@ -50,7 +50,7 @@ class Trello_agent:
         try:
             qres = urllib2.urlopen(qstr).read()
         except:
-            print 'Access error'
+            print('Access error')
             sys.exit()
         
         # find specified board        
@@ -65,7 +65,7 @@ class Trello_agent:
         try:
             qres = urllib2.urlopen(qstr).read()
         except:
-            print 'Access error: could not get list id'
+            print('Access error: could not get list id')
             sys.exit()
         
         qres = json.loads(qres)
@@ -133,7 +133,7 @@ def make_log():
     ai = Trello_agent()
     ai.read_credential_file(os.getcwd() + '/credential')
     ai.get_board_id()
-    ai.get_list_id('done')
+    ai.get_list_id('Done')
     ai.get_done_cards()
     ai.write_done_cards()
     ai.archive_all_dones()
@@ -142,7 +142,7 @@ def card_batch_generate():
     ai = Trello_agent()
     ai.read_credential_file(os.getcwd() + '/credential')
     ai.get_board_id()
-    ai.get_list_id('plan')
+    ai.get_list_id('Plan')
     ai.batch_card_create(os.getcwd() + '/trello_list.csv')
 
 
