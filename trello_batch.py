@@ -4,6 +4,7 @@ import os, sys, time
 import csv
 # import urllib2
 from urllib.request import * 
+import urllib.parse
 import json
 from datetime import date
 import argparse
@@ -95,13 +96,15 @@ class Trello_agent:
 
     def archive_all_dones(self):
         qstr = 'https://api.trello.com/1/lists/' + self.list_id + \
-                '/archiveAllCards?key=' + self.credential_key + '&token=' + self.token 
+                '/archiveAllCards'
+        post_data = {
+                     'key':self.credential_key,
+                     'token':self.token
+                     }
+        encoded_post_data = urllib.parse.urlencode(post_data).encode()
+        # generate POST to archive all cards 
+        urllib.request.urlopen(qstr, data = encoded_post_data)
         
-        # generate POST 
-        req = Request(qstr, data = '')
-        # archive all cards        
-        urlopen(req)
-    
     def batch_card_create(self, filepath):
         # import schedule list
         schedules = csv.reader(open(filepath, 'r'), delimiter = ',')
@@ -118,13 +121,16 @@ class Trello_agent:
                 error_flg = 1
             
             if error_flg == 0:
-                qstr = 'https://trello.com/1/cards?key=' + self.credential_key + \
-                        '&token=' + self.token + \
-                        '&idList=' + self.list_id + \
-                        '&name=' + row[0].replace(' ', '%20') + \
-                        '&due=' + datebuf
-                req = Request(qstr, '')
-                urlopen(req)
+                qstr = 'https://trello.com/1/cards'
+                post_data = {
+                             'key': self.credential_key,
+                             'token': self.token,
+                             'idList': self.list_id,
+                             'name': row[0],
+                             'due': datebuf
+                             }
+                encoded_post_data = urllib.parse.urlencode(post_data).encode()
+                urllib.request.urlopen(qstr, data = encoded_post_data)
             else:
                 print('Error: date column is not correct format')
                 print(row)
@@ -148,7 +154,7 @@ def card_batch_generate():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default = 'create', help = 'archive or create')
+    parser.add_argument('--mode', default = 'archive', help = 'archive or create')
     args = parser.parse_args()
     
     if args.mode == 'archive':
