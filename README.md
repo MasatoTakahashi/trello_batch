@@ -2,7 +2,7 @@
 A script for batch processing for everyday's Trello operation.
 
 # Requirements
-Python 2.7.x
+Python 3.x
 
 # How to use
 1. make ** credential ** file in the same directory as these scripts
