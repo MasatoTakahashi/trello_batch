@@ -22,3 +22,8 @@ or
 ```sh
 python trello_batch.py --mode create
 ```
+
+
+# update
+## 2015/11/05
+add batch create from icalendar url

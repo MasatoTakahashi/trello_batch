@@ -2,11 +2,12 @@
 
 import os, sys, time
 import csv
-# import urllib2
 from urllib.request import * 
 import urllib.parse
+import urllib.error
 import json
 from datetime import date
+import icalendar, dateutil
 import argparse
 
 class Trello_agent:
@@ -134,33 +135,76 @@ class Trello_agent:
             else:
                 print('Error: date column is not correct format')
                 print(row)
+  
+    def ical2card(self, cal_url):
+      response = urllib.request.urlopen(cal_url).read()
+      cal = icalendar.Calendar.from_ical(response)
+
+      for event in cal.walk('vevent'):
+        # print(event)
+        card_name = event.get('summary')
+        
+        card_description = event.get('description')
+        
+        t_zone = dateutil.tz.gettz('Japan/Tokyo')
+        card_due = event.get('dtstart').dt.astimezone(t_zone)
+        card_due = card_due.strftime('%Y/%m/%d %H:%M')
+        
+        qstr = 'https://trello.com/1/cards'
+        post_data = {
+                     'key': self.credential_key,
+                     'token': self.token,
+                     'idList': self.list_id,
+                     'name': card_name,
+                     'due': card_due,
+                     'desc': card_description
+                     }
+        encoded_post_data = urllib.parse.urlencode(post_data).encode()
+        urllib.request.urlopen(qstr, data = encoded_post_data)
         
 def make_log():
-    ai = Trello_agent()
-    ai.read_credential_file(os.getcwd() + '/credential')
-    ai.get_board_id()
-    ai.get_list_id('Done')
-    ai.get_done_cards()
-    ai.write_done_cards()
-    ai.archive_all_dones()
+  ai = Trello_agent()
+  ai.read_credential_file(os.getcwd() + '/credential')
+  ai.get_board_id()
+  ai.get_list_id('Done')
+  ai.get_done_cards()
+  ai.write_done_cards()
+  ai.archive_all_dones()
 
 def card_batch_generate():
-    ai = Trello_agent()
-    ai.read_credential_file(os.getcwd() + '/credential')
-    ai.get_board_id()
-    ai.get_list_id('Plan')
-    ai.batch_card_create(os.getcwd() + '/trello_list.csv')
+  ai = Trello_agent()
+  ai.read_credential_file(os.getcwd() + '/credential')
+  ai.get_board_id()
+  ai.get_list_id('Plan')
+  ai.batch_card_create(os.getcwd() + '/trello_list.csv')
 
+def make_card_from_ical_url(url):
+  try:
+    urllib.request.urlopen(url)
+  except urllib.error.HTTPError:
+    print(urllib.error.HTTPError)
+    sys.exit(1)
+  except urllib.error.URLError:
+    print(urllib.error.URLError)
+    sys.exit(1)
+    
+  ai = Trello_agent()
+  ai.read_credential_file(os.getcwd() + '/credential')
+  ai.get_board_id()
+  ai.get_list_id('Plan')
+  ai.ical2card(url)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default = 'archive', help = 'archive or create')
+    parser.add_argument('--mode', default = 'archive', help = 'archive or create', nargs = '+')
     args = parser.parse_args()
     
-    if args.mode == 'archive':
+    if args.mode[0] == 'archive':
         make_log()
-    elif args.mode == 'create':
+    elif args.mode[0] == 'create':
         card_batch_generate()
+    elif args.mode[0] == 'cal':
+        make_card_from_ical_url(args.mode[1])
     else:
         print('Error: invalid mode is assigned')
     
