@@ -146,7 +146,7 @@ class Trello_agent:
         
         card_description = event.get('description')
         
-        t_zone = dateutil.tz.gettz('Japan/Tokyo')
+        t_zone = dateutil.tz.gettz('Etc/GMT+5')
         card_due = event.get('dtstart').dt.astimezone(t_zone)
         card_due = card_due.strftime('%Y/%m/%d %H:%M')
         
