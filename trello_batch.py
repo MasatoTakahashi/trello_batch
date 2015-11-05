@@ -137,6 +137,8 @@ class Trello_agent:
                 print(row)
   
     def ical2card(self, cal_url):
+      course_abbr_name = cal_url.replace('https://class.coursera.org/', '').replace('/api/course/calendar', '')
+      
       response = urllib.request.urlopen(cal_url).read()
       cal = icalendar.Calendar.from_ical(response)
 
@@ -155,7 +157,7 @@ class Trello_agent:
                      'key': self.credential_key,
                      'token': self.token,
                      'idList': self.list_id,
-                     'name': card_name,
+                     'name': course_abbr_name + ":" + card_name,
                      'due': card_due,
                      'desc': card_description
                      }
